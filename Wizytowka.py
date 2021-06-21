@@ -1,5 +1,4 @@
 from faker import Faker
-import random
 
 
 fak = Faker("pl_PL")
