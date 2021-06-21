@@ -1,34 +1,42 @@
 from faker import Faker
 import random
-fak = Faker()
 
 
-# Tutaj stworzyłem funkcje, które generują fałszywe dane osobowe:.......................................................
-# faketel lepiej wygląda w ten sposób, niż korzystając z fakera moim zdaniem.
-def faketel():
-    tel = "+48"
-    for i in range(3):
-        tel += " " + f"000{random.randint(0,999)}"[-3:]
-    return tel
+fak = Faker("pl_PL")
+
+
+# W związku z tym, że dane będą po polsku, to czasem trzeba będzie usunąć polskie znaki:
+def normalize_letters(tekst):
+    text = tekst.lower()
+    polish_letters = "ąćęłńóśźż"
+    normal_letters = "acelnoszz"
+    new_text = ""
+    for i in text:
+        letter = i
+        if letter in polish_letters:
+            letter = normal_letters[polish_letters.index(i)]
+        new_text += letter
+    return new_text
+
+    # Tutaj stworzyłem funkcje, które generują fałszywe dane osobowe:.......................................................
 
 
 def fakemail(firstname, lastname):
-    maildomains = ["gmail", "onet", "interia"]
-    mailextentions = [".com", ".pl", ".com.pl"]
-    privmail = f"{firstname}.{lastname}@{random.choice(maildomains)}{random.choice(mailextentions)}"
-
+    norm_firstname = normalize_letters(firstname)
+    norm_lastname = normalize_letters(lastname)
     mail_domain = fak.domain_name()
-    bizmail = f"{firstname}.{lastname}@{mail_domain}"
-    return privmail, bizmail
+    bizmail = f"{norm_firstname}.{norm_lastname}@{mail_domain}"
+    return bizmail
 
 
 def random_npc():
     firstname = fak.first_name()
     lastname = fak.last_name()
-    privtel = faketel()
-    biztel = faketel()
-    privmail, bizmail = fakemail(firstname, lastname)
-    return [firstname, lastname, privtel, privmail, biztel, bizmail]
+    privtel = fak.phone_number()
+    biztel = fak.phone_number()
+    mail = fakemail(firstname, lastname)
+    job = fak.job()
+    return [firstname, lastname, privtel, mail, biztel, job]
 
 
 # Tutaj jest główna klasa, wizytówka:.....................................................................................
@@ -59,17 +67,21 @@ class BaseContact:
     def label_length(self):
         return self._label_length
 
-    @label_length.setter
-    def label_length(self, value):
-        self._label_length = value
-
 
 # Wizytówka biznesowa:........................................................................................................
 class BusinessContact(BaseContact):
-    def __init__(self, firstname, lastname, tel, mail, biztel, bizmail):
+    def __init__(self, firstname, lastname, tel, mail, biztel, job):
         super().__init__(firstname, lastname, tel, mail)
         self.tel = biztel
-        self.mail = bizmail
+        self._job = job
+
+    @property
+    def job(self):
+        return self._job
+
+    @job.setter
+    def job(self, value):
+        self._job = value
 
 
 # Generator wizytówek:..............................................................................................................
@@ -91,7 +103,7 @@ def create_contacts(how_many=1, is_business=False, loud=False):
             one_contact = BaseContact(*enpec[:-2])
         if loud:
             print("")
-            print("Name, LName, PrivPhone, PrivMail, BusiPhone, BusiMail")
+            print("Name, LName, PrivPhone, Mail, BusiPhone, Job")
             print(enpec)
             one_contact.contact()
         contacts_list.append(one_contact)
@@ -99,14 +111,17 @@ def create_contacts(how_many=1, is_business=False, loud=False):
 
     # Wypróbowanie kodu:..........................................................................................................
 if __name__ == "__main__":
-    base = create_contacts(2, False)
-    biz = create_contacts(2, True)
+    base = create_contacts(2, False, True)
+    biz = create_contacts(2, True, True)
+    '''
     for i in base:
         i.contact()
     print("")
     for i in biz:
         i.contact()
-    '''
+        '''
+
+'''
     enpec = random_npc()
     print(enpec)
 
@@ -120,8 +135,7 @@ if __name__ == "__main__":
     print(wiz2)
     wiz2.contact()
 
-
-    print(wiz1.label_length)
-    wiz1.label_length = 10
-    print(wiz1.label_length)
-    '''
+    print(wiz2.job)
+    wiz2.job = "Menedżer"
+    print(wiz2.job)
+'''
